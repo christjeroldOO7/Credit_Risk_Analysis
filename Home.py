@@ -11,9 +11,9 @@ st.markdown(
     """
     **CONTENTS:**
 
-    - [Insights](/src/pagesInsights)
+    - [Insights](/Insights)
 
-    - [Model](/src/pagesModel)
+    - [Model](/Model)
 
 """
 )
