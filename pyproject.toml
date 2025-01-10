@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "credit-risk"
+version = "0.1.0"
+description = "Credit Risk analysis to identify defaults with visualization."
+authors = ["Piotr Wislowski <pwislowski@hotmail.com>",]
+readme = "README.md"
+packages = [{include = "credit_risk"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pandas = "1.5.3"
+numpy = "^1.24.3"
+streamlit = "^1.21.0"
+matplotlib = "^3.7.1"
+seaborn = "^0.12.2"
+plotly = "^5.14.1"
+scikit-learn = "^1.2.2"
+imbalanced-learn = "^0.10.1"
+xgboost = "^1.7.5"
+data = { path = "src/data/", develop = false }
+model = { path = "src/model/", develop = false }
+
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.22.0"
+black = "^23.3.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
