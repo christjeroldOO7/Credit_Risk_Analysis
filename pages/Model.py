@@ -20,7 +20,7 @@ st.header("Metrics")
 st.divider()
 
 # Define the path to the dataset (relative path)
-data_file = os.path.join(os.path.dirname(_file_), '..', 'data', 'credit_customers.csv')
+data_file = os.path.join(os.path.dirname(__file__), '..', 'data', 'credit_customers.csv')
 
 # Check if the file exists
 if not os.path.exists(data_file):
@@ -103,4 +103,55 @@ with col1:
         fresidence_since = st.selectbox("Residence Since", sorted(df_clean["residence_since"].unique()))
         fage_agg = st.selectbox("Age Bracket", sorted(df_clean["age_agg"].unique()))
         fhousing = st.selectbox("Housing", df_clean["housing"].unique())
-        fcredit_history …
+        fcredit_history = st.selectbox("Credit History", df_clean["credit_history"].unique())
+        fcredit_amount = st.number_input("Credit Amount", step=100)
+        fforeign_worker = st.selectbox("Foreign Worker", df_clean["foreign_worker"].unique())
+        fproperty_magintude = st.selectbox("Collateral", df_clean["property_magnitude"].unique())
+        fsex = st.selectbox("Sex", df_clean["sex"].unique())
+        fmartial = st.selectbox("Marital Status", df_clean["martial"].unique())
+        fcredit_util = fcredit_amount / fexisting_credits
+        fdit = fcredit_amount / finstall_commit
+
+        submitted = st.form_submit_button("Predict")
+
+        if submitted:
+            # Collect form data into dictionary
+            form_data = {
+                "checking_status": fcheck_status,
+                "duration": fduration,
+                "credit_history": fcredit_history,
+                "purpose": fpurpose,
+                "credit_amount": fcredit_amount,
+                "savings_status": fsaving_status,
+                "employment": femployment,
+                "installment_commitment": finstall_commit,
+                "other_parties": fother_parties,
+                "residence_since": fresidence_since,
+                "property_magnitude": fproperty_magintude,
+                "other_payment_plans": fother_pay_plans,
+                "housing": fhousing,
+                "existing_credits": fexisting_credits,
+                "job": fjob,
+                "own_telephone": fown_telephone,
+                "foreign_worker": fforeign_worker,
+                "sex": fsex,
+                "martial": fmartial,
+                "dti": fdit,
+                "age_agg": fage_agg,
+                "credit_util": fcredit_util,
+            }
+
+            with col2:
+                # Transform data for prediction
+                transformed = model.transform_for_pred(SCALER_MAPPING, LABEL_MAPPING, form_data)
+                # Make prediction
+                local_pred = MODEL.predict(transformed)
+                local_pred_proba = MODEL.predict_proba(transformed)
+
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    st.metric(label="Creditor Assessment", value="Good" if local_pred else "Bad")
+
+                with col2:
+                    st.metric(label="Model's Confidence", value=f"{local_pred_proba[0][1]:.2%}")
