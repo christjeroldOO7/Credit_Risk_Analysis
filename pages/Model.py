@@ -5,29 +5,35 @@ import streamlit as st
 from typing import Dict
 
 # Add the absolute path of the 'data' directory to sys.path
-# This path should be based on where your 'data.py' file is located
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'data')))
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'model'))) 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'model')))
 
-# Now you should be able to import the functions from 'data.py'
-from data import process_data, get_cleaned_data  # This assumes data.py is in src/data
+# Import the required functions and classes
+from data import process_data, get_cleaned_data  # Assumes data.py is in src/data
 import model
 from model import ModelPerformance
 
 # Set up Streamlit
 st.set_page_config(page_title="XGBClassifier ML Model", layout="wide")
-
 st.title("Model Page")
 st.header("Metrics")
 st.divider()
 
+# Define the path to the dataset (relative path)
+data_file = os.path.join(os.path.dirname(_file_), '..', 'data', 'credit_customers.csv')
+
+# Check if the file exists
+if not os.path.exists(data_file):
+    st.error(f"Data file not found: {data_file}")
+    st.stop()
+
+# Load and process data
+df_clean = process_data(get_cleaned_data(data_file))
+df = process_data(get_cleaned_data(data_file))
+
 # Initialize model and data
 LABEL_MAPPING = model.LABEL_MAPPING
 SCALER_MAPPING = model.SCALER_MAPPING
-
-# Load and process data
-df_clean = process_data(get_cleaned_data(f"C:/Users/aashi/Downloads/HCL Internship/credit-risk-analysis/credit_customers.csv"))
-df = process_data(get_cleaned_data(f"C:/Users/aashi/Downloads/HCL Internship/credit-risk-analysis/credit_customers.csv"))
 
 # Model data
 DF: Dict[str, pd.DataFrame] = model.process_df(df)
@@ -78,120 +84,23 @@ st.divider()
 
 # Model Forecast section
 st.header("Assess Creditor")
-
 col1, col2 = st.columns(2)
 
 with col1:
     with st.form("Assess Creditor"):
         # Form inputs for creditor prediction
-        fcheck_status = st.selectbox(
-            label="Checking Status", options=df_clean["checking_status"].unique()
-        )
-        finstall_commit = st.selectbox(
-            label="Installment Commitment",
-            options=sorted(df_clean["installment_commitment"].unique()),
-        )
-        fexisting_credits = st.selectbox(
-            label="Existing Credits",
-            options=sorted(df_clean["existing_credits"].unique()),
-        )
-        fother_parties = st.selectbox(
-            label="Other Parties", options=df_clean["other_parties"].unique()
-        )
-        fother_pay_plans = st.selectbox(
-            label="Other Payment Plans",
-            options=df_clean["other_payment_plans"].unique(),
-        )
-        fown_telephone = st.selectbox(
-            label="Own Telephone", options=df_clean["own_telephone"].unique()
-        )
-        fduration = st.selectbox(
-            label="Credit Duration", options=sorted(df_clean["duration"].unique())
-        )
-        fjob = st.selectbox(label="Job Type", options=df_clean["job"].unique())
-        fsaving_status = st.selectbox(
-            label="Savings Status", options=df_clean["savings_status"].unique()
-        )
-        fpurpose = st.selectbox(
-            label="Purpose", options=sorted(df_clean["purpose"].unique())
-        )
-        femployment = st.selectbox(
-            label="Employment Duration", options=df_clean["employment"].unique()
-        )
-        fresidence_since = st.selectbox(
-            label="Residence Since",
-            options=sorted(df_clean["residence_since"].unique()),
-        )
-        fage_agg = st.selectbox(
-            label="Age Bracket", options=sorted(df_clean["age_agg"].unique())
-        )
-        fhousing = st.selectbox(label="Housing", options=df_clean["housing"].unique())
-        fcredit_history = st.selectbox(
-            label="Credit History", options=df_clean["credit_history"].unique()
-        )
-        fcredit_amount = st.number_input(label="Credit Amount", step=100)
-        fforeign_worker = st.selectbox(
-            label="Foreign Worker", options=df_clean["foreign_worker"].unique()
-        )
-        fproperty_magintude = st.selectbox(
-            label="Collateral", options=df_clean["property_magnitude"].unique()
-        )
-        fsex = st.selectbox(label="Sex", options=df_clean["sex"].unique())
-        fmartial = st.selectbox(
-            label="Martial Status", options=df_clean["martial"].unique()
-        )
-        fcredit_util: float = fcredit_amount / fexisting_credits
-        fdit: float = fcredit_amount / finstall_commit
-
-        submitted = st.form_submit_button("Predict")
-
-        if submitted:
-            # Collect form data into dictionary
-            form_data = {
-                "checking_status": fcheck_status,
-                "duration": fduration,
-                "credit_history": fcredit_history,
-                "purpose": fpurpose,
-                "credit_amount": fcredit_amount,
-                "savings_status": fsaving_status,
-                "employment": femployment,
-                "installment_commitment": finstall_commit,
-                "other_parties": fother_parties,
-                "residence_since": fresidence_since,
-                "property_magnitude": fproperty_magintude,
-                "other_payment_plans": fother_pay_plans,
-                "housing": fhousing,
-                "existing_credits": fexisting_credits,
-                "job": fjob,
-                "own_telephone": fown_telephone,
-                "foreign_worker": fforeign_worker,
-                "sex": fsex,
-                "martial": fmartial,
-                "dti": fdit,
-                "age_agg": fage_agg,
-                "credit_util": fcredit_util,
-            }
-
-            with col2:
-                # Transform data for prediction
-                transformed = model.transform_for_pred(
-                    SCALER_MAPPING, LABEL_MAPPING, form_data
-                )
-                # Make prediction
-                local_pred = MODEL.predict(transformed)
-
-                local_pred_proba = MODEL.predict_proba(transformed)
-
-                col1, col2 = st.columns(2)
-
-                with col1:
-                    st.metric(
-                        label="Creditor Assessment",
-                        value="Good" if local_pred else "Bad",
-                    )
-
-                with col2:
-                    st.metric(
-                        label='Model\'s Confidence',
-                        value=f'{local_pred_proba[0][1]:.2%}'
-                    )
+        fcheck_status = st.selectbox("Checking Status", df_clean["checking_status"].unique())
+        finstall_commit = st.selectbox("Installment Commitment", sorted(df_clean["installment_commitment"].unique()))
+        fexisting_credits = st.selectbox("Existing Credits", sorted(df_clean["existing_credits"].unique()))
+        fother_parties = st.selectbox("Other Parties", df_clean["other_parties"].unique())
+        fother_pay_plans = st.selectbox("Other Payment Plans", df_clean["other_payment_plans"].unique())
+        fown_telephone = st.selectbox("Own Telephone", df_clean["own_telephone"].unique())
+        fduration = st.selectbox("Credit Duration", sorted(df_clean["duration"].unique()))
+        fjob = st.selectbox("Job Type", df_clean["job"].unique())
+        fsaving_status = st.selectbox("Savings Status", df_clean["savings_status"].unique())
+        fpurpose = st.selectbox("Purpose", sorted(df_clean["purpose"].unique()))
+        femployment = st.selectbox("Employment Duration", df_clean["employment"].unique())
+        fresidence_since = st.selectbox("Residence Since", sorted(df_clean["residence_since"].unique()))
+        fage_agg = st.selectbox("Age Bracket", sorted(df_clean["age_agg"].unique()))
+        fhousing = st.selectbox("Housing", df_clean["housing"].unique())
+        fcredit_history …
