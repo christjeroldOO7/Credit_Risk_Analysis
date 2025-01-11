@@ -1,5 +1,5 @@
-pip install -e ./src/model
-pip install -e ./src/data
+pip install -e ./model
+pip install -e ./data
 
 mkdir -p ~/.streamlit
 
