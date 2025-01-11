@@ -15,7 +15,7 @@ import data
 import model
 
 # Dynamically construct paths
-current_dir = os.path.dirname(_file_)
+current_dir = os.path.dirname(__file__)
 assets_dir = os.path.join(current_dir, 'assets')
 
 # Verify and log paths
