@@ -16,9 +16,9 @@ import model
 
 # Dynamically construct paths
 current_dir = os.path.dirname(__file__)
-assets_dir = os.path.join(current_dir, 'assets')
+assets_dir = os.path.abspath(os.path.join(current_dir, '../assets'))  # Updated path
 
-# Verify and log paths
+# Log the assets directory for debugging
 logging.debug(f"Assets Directory: {assets_dir}")
 
 # Image import with dynamically constructed paths
@@ -33,7 +33,7 @@ NUMERIC_KDE = Image.open(os.path.join(assets_dir, 'numeric_kde.png'))
 st.set_page_config(page_title="Data Insights", layout="wide")
 
 # Data initialization
-df_clean = data.get_cleaned_data(os.path.join(current_dir, "credit_customers.csv"))
+df_clean = data.get_cleaned_data(os.path.join(current_dir, "../credit_customers.csv"))
 df = data.process_data(df_clean)
 
 # Page title
