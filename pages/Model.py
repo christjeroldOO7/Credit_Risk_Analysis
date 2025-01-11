@@ -20,7 +20,7 @@ st.header("Metrics")
 st.divider()
 
 # Define the path to the dataset (relative path)
-data_file = os.path.join(os.path.dirname(__file__), '..', 'data', 'credit_customers.csv')
+data_file = os.path.join(os.path.dirname(__file__), '..', 'credit_customers.csv')
 
 # Check if the file exists
 if not os.path.exists(data_file):
