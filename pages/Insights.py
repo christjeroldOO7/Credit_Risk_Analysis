@@ -3,7 +3,7 @@ from PIL import Image
 import sys
 
 # Ensure the directory containing 'data.py' is in the sys.path if not in the same folder
-sys.path.append('../data')  # Update with the actual path to the directory containing 'data.py'
+sys.path.append('../data/data.py')  # Update with the actual path to the directory containing 'data.py'
 
 import data
 import model
