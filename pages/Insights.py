@@ -3,18 +3,18 @@ from PIL import Image
 import sys
 
 # Ensure the directory containing 'data.py' is in the sys.path if not in the same folder
-sys.path.append('../data/data.py')  # Update with the actual path to the directory containing 'data.py'
+sys.path.append('/data')  # Update with the actual path to the directory containing 'data.py'
 
 import data
 import model
 
 # Image import
-CATEGORY_COUNTPLOT = Image.open('../assets/category_countplot.png')
-CATEGORY_PIE = Image.open('../assets/category_pie.png')
-CORR_NUMERIC = Image.open('../assets/corr_numeric.png')
-CORR_NUMERIC_PROCESSED = Image.open('../assets/corr_numeric_processed.png')
-NUMERIC_COUNTPLOT = Image.open('../assets/numeric_countplot.png')
-NUMERIC_KDE = Image.open('../assets/numeric_kde.png')
+CATEGORY_COUNTPLOT = Image.open('/assets/category_countplot.png')
+CATEGORY_PIE = Image.open('/assets/category_pie.png')
+CORR_NUMERIC = Image.open('/assets/corr_numeric.png')
+CORR_NUMERIC_PROCESSED = Image.open('/assets/corr_numeric_processed.png')
+NUMERIC_COUNTPLOT = Image.open('/assets/numeric_countplot.png')
+NUMERIC_KDE = Image.open('/assets/numeric_kde.png')
 
 st.set_page_config(page_title="Data Insights", layout="wide")
 
