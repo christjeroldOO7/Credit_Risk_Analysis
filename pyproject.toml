@@ -17,8 +17,8 @@ plotly = "^5.14.1"
 scikit-learn = "^1.2.2"
 imbalanced-learn = "^0.10.1"
 xgboost = "^1.7.5"
-data = { path = "src/data/", develop = false }
-model = { path = "src/model/", develop = false }
+data = { path = "data/", develop = false }
+model = { path = "model/", develop = false }
 
 
 [tool.poetry.group.dev.dependencies]
