@@ -1,5 +1,4 @@
 from typing import List, Dict, Union
-from dataclasses import dataclass
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler, LabelEncoder
 from imblearn.over_sampling import SMOTE
@@ -86,7 +85,7 @@ def process_df(xdf: pd.DataFrame) -> Dict[str, pd.DataFrame]:
 
 @st.cache_resource
 def xgbclassifier_model(X_train, y_train) -> XGBClassifier:
-    model = XGBClassifier(*{*BEST_PARAMS, "random_state": RANDOM_STATE})
+    model = XGBClassifier(**BEST_PARAMS, random_state=RANDOM_STATE)
 
     try:
         model.fit(X_train, y_train)
