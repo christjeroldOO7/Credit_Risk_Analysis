@@ -6,20 +6,13 @@ import pandas as pd
 from xgboost import XGBClassifier
 import streamlit as st
 
-_all_ = [
-    "process_df",
-    "xgbclassifier_model",
-    "transform_for_pred",
-    "LABEL_MAPPING",
-    "SCALER_MAPPING",
-]
-
+# Constants
 BEST_PARAMS = dict(learning_rate=0.1, max_depth=5, n_estimators=500)
 RANDOM_STATE = 38
 LABEL_MAPPING: Dict[str, Dict[str, int]] = dict()
 SCALER_MAPPING: Dict[str, MinMaxScaler] = dict()
 
-
+# Functions
 def normalize_df(xdf: pd.DataFrame) -> pd.DataFrame:
     numeric_cols = xdf.select_dtypes(include=["float64", "int64"]).columns
     for c in numeric_cols:
@@ -28,7 +21,6 @@ def normalize_df(xdf: pd.DataFrame) -> pd.DataFrame:
         SCALER_MAPPING[c] = scaler
         xdf[c] = scaler.transform(xdf[c].to_numpy().reshape(-1, 1))
     return xdf
-
 
 def labels_encode(xdf: pd.DataFrame) -> pd.DataFrame:
     category_cols = xdf.select_dtypes(include=["object", "category"]).columns
@@ -40,7 +32,6 @@ def labels_encode(xdf: pd.DataFrame) -> pd.DataFrame:
         xdf[c] = le.transform(xdf[c])
     return xdf
 
-
 def apply_smote(xdf: pd.DataFrame) -> pd.DataFrame:
     smote = SMOTE(random_state=RANDOM_STATE)
     y = xdf["class"]
@@ -49,7 +40,6 @@ def apply_smote(xdf: pd.DataFrame) -> pd.DataFrame:
     X_res, y_res = smote.fit_resample(X, y)
     X_res["class"] = y_res  # Add back the class column after resampling
     return X_res
-
 
 def split_ml_df(
     xdf: pd.DataFrame, test_size: float, random_state=RANDOM_STATE
@@ -60,7 +50,6 @@ def split_ml_df(
         test_size=test_size,
         random_state=random_state,
     )
-
 
 def process_df(xdf: pd.DataFrame) -> Dict[str, pd.DataFrame]:
     st.write("Initial Data Preview:")
@@ -82,7 +71,6 @@ def process_df(xdf: pd.DataFrame) -> Dict[str, pd.DataFrame]:
     keys = ["X_train", "X_test", "y_train", "y_test"]
     return {k: v for [k, v] in zip(keys, splitted)}
 
-
 @st.cache_resource
 def xgbclassifier_model(X_train, y_train) -> XGBClassifier:
     model = XGBClassifier(**BEST_PARAMS, random_state=RANDOM_STATE)
@@ -96,10 +84,8 @@ def xgbclassifier_model(X_train, y_train) -> XGBClassifier:
 
     return model
 
-
 def get_label_encoding(coll: Dict[str, Dict[str, int]], label: str, key: str) -> int:
     return coll[label][key]
-
 
 def scale_for_pred(
     coll: Dict[str, MinMaxScaler], label: str, val: Union[int, float]
@@ -107,7 +93,6 @@ def scale_for_pred(
     scaler: MinMaxScaler = coll[label]
     val = [[val]]
     return scaler.transform(val)[0][0]
-
 
 def transform_for_pred(
     coll_num: Dict[str, MinMaxScaler],
@@ -122,7 +107,6 @@ def transform_for_pred(
 
     return pd.DataFrame(data=[form])
 
-
 # Streamlit App
 st.title("XGBoost Classifier with Preprocessing")
 
@@ -131,6 +115,9 @@ uploaded_file = st.file_uploader("Upload your dataset (CSV format)", type="csv")
 
 if uploaded_file:
     data = pd.read_csv(uploaded_file)
+    st.write("Uploaded File Preview:")
+    st.dataframe(data.head())
+
     if "class" not in data.columns:
         st.error("The dataset must contain a 'class' column.")
     else:
@@ -142,10 +129,17 @@ if uploaded_file:
             processed_data["y_test"],
         )
 
+        st.write("Training and Testing Data Shapes:")
+        st.write(f"X_train shape: {X_train.shape}")
+        st.write(f"X_test shape: {X_test.shape}")
+        st.write(f"y_train shape: {y_train.shape}")
+        st.write(f"y_test shape: {y_test.shape}")
+
         if st.button("Train Model"):
+            st.write("Training the model...")
             model = xgbclassifier_model(X_train, y_train)
             if model:
                 accuracy = model.score(X_test, y_test)
-                st.write(f"Model Accuracy: {accuracy:.2f}")
+                st.success(f"Model Accuracy: {accuracy:.2f}")
 else:
     st.info("Please upload a dataset to begin.")
