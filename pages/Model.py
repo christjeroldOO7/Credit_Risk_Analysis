@@ -1,3 +1,57 @@
+# Imports
+from typing import List, Dict, Union
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler, LabelEncoder
+from imblearn.over_sampling import SMOTE
+import pandas as pd
+from xgboost import XGBClassifier
+import streamlit as st
+
+# Global Constants
+BEST_PARAMS = dict(learning_rate=0.1, max_depth=5, n_estimators=500)
+RANDOM_STATE = 38
+LABEL_MAPPING: Dict[str, Dict[str, int]] = dict()
+SCALER_MAPPING: Dict[str, MinMaxScaler] = dict()
+
+# Functions
+def normalize_df(xdf: pd.DataFrame) -> pd.DataFrame:
+    numeric_cols = xdf.select_dtypes(include=["float64", "int64"]).columns
+    for c in numeric_cols:
+        scaler = MinMaxScaler()
+        scaler.fit(xdf[c].to_numpy().reshape(-1, 1))
+        SCALER_MAPPING[c] = scaler
+        xdf[c] = scaler.transform(xdf[c].to_numpy().reshape(-1, 1))
+    return xdf
+
+def labels_encode(xdf: pd.DataFrame) -> pd.DataFrame:
+    category_cols = xdf.select_dtypes(include=["object", "category"]).columns
+    for c in category_cols:
+        le = LabelEncoder()
+        xdf[c] = xdf[c].astype(str)  # Ensure all data is string before encoding
+        le.fit(xdf[c])
+        LABEL_MAPPING[c] = dict(zip(le.classes_, le.transform(le.classes_)))
+        xdf[c] = le.transform(xdf[c])
+    return xdf
+
+def apply_smote(xdf: pd.DataFrame) -> pd.DataFrame:
+    smote = SMOTE(random_state=RANDOM_STATE)
+    y = xdf["class"]
+    X = xdf.drop("class", axis=1)
+
+    X_res, y_res = smote.fit_resample(X, y)
+    X_res["class"] = y_res  # Add back the class column after resampling
+    return X_res
+
+def split_ml_df(
+    xdf: pd.DataFrame, test_size: float, random_state=RANDOM_STATE
+) -> List[pd.DataFrame]:
+    return train_test_split(
+        xdf.drop("class", axis=1),
+        xdf["class"],
+        test_size=test_size,
+        random_state=random_state,
+    )
+
 def process_df(xdf: pd.DataFrame) -> Dict[str, pd.DataFrame]:
     st.write("Initial Data Preview:")
     st.dataframe(xdf)  # Display initial data in Streamlit
@@ -23,13 +77,10 @@ def xgbclassifier_model(X_train, y_train) -> XGBClassifier:
     model = XGBClassifier(**BEST_PARAMS, random_state=RANDOM_STATE)
 
     try:
-        st.write("Starting model training...")
-        model.fit(X_train, y_train, eval_metric="logloss", verbose=True)
+        model.fit(X_train, y_train)
         st.success("Model training completed successfully!")
-    except ValueError as ve:
-        st.error(f"ValueError during training: {ve}")
     except Exception as e:
-        st.error(f"Unexpected error: {e}")
+        st.error(f"Model training failed: {e}")
         return None
 
     return model
