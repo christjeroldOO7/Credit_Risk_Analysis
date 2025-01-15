@@ -20,4 +20,4 @@ The Credit Risk Analysis System predicts the likelihood of loan defaults using h
 # Procedures:
 1. Download dataset `credit_customers.csv`
 2. Run `/nbs/analysis.ipynb`
-3. Run `/src/Home.py` for activating streamlit local server
+3. Run `Home.py` for activating streamlit local server
