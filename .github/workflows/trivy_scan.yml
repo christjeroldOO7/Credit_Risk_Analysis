@@ -35,9 +35,6 @@ jobs:
           OUTPUT_FILE="GitHub Actions/Trivy Automation/scan-results-${DATE}.json"
           trivy image --format json --ignore-unfixed --vuln-type os,library --severity CRITICAL,HIGH,MEDIUM,LOW -o "$OUTPUT_FILE" nginx:latest
 
-      - name: Verify scan results exist
-        run: ls -l "GitHub Actions/Trivy Automation/"
-
       - name: Commit scan results to repository
         env:
           GITHUB_TOKEN: ${{ secrets.GHCR_PAT }}
