@@ -21,9 +21,6 @@ jobs:
         id: set-date
         run: echo "DATE=$(date +%m.%d.%Y)" >> $GITHUB_ENV
 
-      - name: Create output directory
-        run: mkdir -p "GitHub Actions/Trivy Automation"
-
       - name: Install Trivy
         run: |
           sudo apt-get update
