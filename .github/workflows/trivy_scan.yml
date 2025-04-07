@@ -1,59 +1,43 @@
-name: Trivy Security Scan for NGINX
+name: Python CI with Teams Alert
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
   pull_request:
-    branches:
-      - main
+    branches: [ "main" ]
 
 jobs:
-  build:
-    name: Scan nginx:latest with Trivy
-    runs-on: ubuntu-20.04
-
+  test:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Set Date
-        id: set-date
-        run: echo "DATE=$(date +%m.%d.%Y)" >> $GITHUB_ENV
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
 
-      - name: Install Trivy
+      - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y curl jq
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.57.0
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest  # If pytest is not in requirements.txt
 
-      - name: Download Trivy vulnerability database
-        run: trivy image --download-db-only
+      - name: Run tests
+        run: pytest
 
-      - name: Run Trivy vulnerability scanner
-        run: |
-          OUTPUT_FILE="GitHub Actions/Trivy Automation/scan-results-${DATE}.json"
-          trivy image --format json --ignore-unfixed --vuln-type os,library --severity CRITICAL,HIGH,MEDIUM,LOW -o "$OUTPUT_FILE" nginx:latest
-
-      - name: Commit scan results to repository
-        env:
-          GITHUB_TOKEN: ${{ secrets.GHCR_PAT }}
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-          git add "GitHub Actions/Trivy Automation/scan-results-${DATE}.json"
-          git commit -m "Add Trivy scan results (${DATE})"
-          git push origin HEAD:main
-
-      - name: Extract Summary from Scan Results
-        id: extract_summary
-        run: |
-          SUMMARY=$(jq '[.Results[].Vulnerabilities[]? | {ID, Severity, Title, PackageName, InstalledVersion}]' "GitHub Actions/Trivy Automation/scan-results-${DATE}.json" | jq -r '.[0:5] | map("- \(.Severity): \(.ID) (\(.Title)) in \(.PackageName)@\(.InstalledVersion)") | join("\n")')
-          echo "SUMMARY=${SUMMARY}" >> $GITHUB_ENV
-
-      - name: Send Report to Microsoft Teams
-        run: |
-          curl -H "Content-Type: application/json" -d '{
-            "title": "Trivy Security Scan Report",
-            "text": "**Trivy Scan Results for nginx:latest**\n\n**Date:** '${{ env.DATE }}'\n\n**Summary:**\n'${{ env.SUMMARY }}'\n\nFor detailed results, check the GitHub repository."
-          }' ${{ secrets.TEAMS_WEBHOOK_URL }}
+  notify-teams:
+    needs: test
+    if: failure()  # Only run if the `test` job fails
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send failure alert to Teams
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TEAMS_WEBHOOK_ID }}  # Replace with a Teams-compatible webhook
+          message: |
+            ❌ **Python Test Failed**  
+            Repository: ${{ github.repository }}  
+            Workflow: ${{ github.workflow }}  
+            Commit: ${{ github.sha }}  
+            View logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
