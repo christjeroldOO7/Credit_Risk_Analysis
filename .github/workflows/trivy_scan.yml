@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest                    # similar to "image" in GitLab
-    steps:
+    steps: 
       - run: echo "This is a build step"      # similar to "script" in GitLab
   test:
     runs-on: ubuntu-latest
