@@ -10,7 +10,7 @@ on:
 
 jobs:
   trivy-scan:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest 
     permissions:
       security-events: write  # Required for GitHub Advanced Security
 
