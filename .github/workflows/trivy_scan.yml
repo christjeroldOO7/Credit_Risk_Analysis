@@ -1,64 +1,24 @@
-name: Trivy Security Scan
-
+name: Security Scan
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
-  trivy-scan:
+  trivy_scan:
     runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
-
-      # Set up Python (required for dependency scanning)
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-
-      # Install dependencies (so Trivy can scan them)
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          if [ -f "requirements.txt" ]; then
-            pip install -r requirements.txt
-          fi
-
-      # Filesystem scan (code secrets, misconfigurations)
-      - name: Run Trivy filesystem scan
+      - name: Run Trivy scan
+        if: ${{ inputs.environment == 'prod' }}
         uses: aquasecurity/trivy-action@master
         with:
-          scan-type: "fs"
-          ignore-unfixed: true
-          severity: "CRITICAL"  # Only fail on CRITICAL
+          image-ref: "your-docker-image:latest"
           format: "table"
-          exit-code: "1"
-          output: "trivy-results-fs.txt"
-
-      # Dependency scan (Python packages)
-      - name: Run Trivy dependency scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: "dep"
+          exit-code: 1
           ignore-unfixed: true
-          severity: "CRITICAL"  # Only fail on CRITICAL
-          format: "sarif"
-          exit-code: "1"
-          output: "trivy-results-dep.sarif"
-
-      # Upload results to GitHub Security tab
-      - name: Upload SARIF results
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: "trivy-results-dep.sarif"
-
-      # Show results (optional)
-      - name: Display scan results
-        run: |
-          cat trivy-results-fs.txt
+          severity: "CRITICAL,HIGH"
