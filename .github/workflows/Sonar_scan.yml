@@ -1,15 +1,31 @@
-name: SonarQube Integration
-  sonarqube:
-    name: SonarQube Integration
+name: SonarCloud Analysis
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  sonarcloud:
+    name: SonarCloud Scan
     runs-on: ubuntu-latest
-    
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
-        # Disabling shallow clone is recommended for improving relevancy of reporting
-        fetch-depth: 0
-    - name: SonarQube Scan
-      uses: sonarsource/sonarqube-scan-action@master
+        fetch-depth: 0  # Required to get full git history for SonarCloud analysis
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'  # Specify your Python version here
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt  # If you have requirements
+        
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarcloud-github-action@master
       env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} //Sonar Token generated 
-        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }} example URL (https://sq.bswlog.co.in/)
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Automatic, no need to set in secrets
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}   # Needs to be set in repo secrets
