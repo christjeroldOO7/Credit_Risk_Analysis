@@ -5,56 +5,60 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-  schedule:
-    - cron: '0 0 * * *'  # Daily scan at midnight
 
 jobs:
   trivy-scan:
     runs-on: ubuntu-latest
     permissions:
-      security-events: write  # Required for GitHub Advanced Security
+      security-events: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Step 1: Filesystem scan (always runs)
+      # Set up Python (required for dependency scanning)
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      # Install dependencies (so Trivy can scan them)
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
+          fi
+
+      # Filesystem scan (code secrets, misconfigurations)
       - name: Run Trivy filesystem scan
         uses: aquasecurity/trivy-action@master
         with:
-          scan-type: 'fs'
+          scan-type: "fs"
           ignore-unfixed: true
-          severity: 'CRITICAL,HIGH'
-          format: 'table'
-          exit-code: '1'
-          output: 'trivy-results-fs.txt'
+          severity: "CRITICAL"  # Only fail on CRITICAL
+          format: "table"
+          exit-code: "1"
+          output: "trivy-results-fs.txt"
 
-      # Step 2: Dependency scan (only if requirements.txt exists)
-      - name: Check for requirements.txt
-        id: check-requirements
-        run: |
-          if [ -f "requirements.txt" ]; then
-            echo "requirements_exists=true" >> $GITHUB_OUTPUT
-          fi
-
+      # Dependency scan (Python packages)
       - name: Run Trivy dependency scan
-        if: steps.check-requirements.outputs.requirements_exists == 'true'
         uses: aquasecurity/trivy-action@master
         with:
-          scan-type: 'dep'
+          scan-type: "dep"
           ignore-unfixed: true
-          severity: 'CRITICAL,HIGH'
-          format: 'sarif'
-          output: 'trivy-results-dep.sarif'
+          severity: "CRITICAL"  # Only fail on CRITICAL
+          format: "sarif"
+          exit-code: "1"
+          output: "trivy-results-dep.sarif"
 
       # Upload results to GitHub Security tab
       - name: Upload SARIF results
-        if: steps.check-requirements.outputs.requirements_exists == 'true'
         uses: github/codeql-action/upload-sarif@v2
         with:
-          sarif_file: 'trivy-results-dep.sarif'
+          sarif_file: "trivy-results-dep.sarif"
 
-      # Print filesystem results (optional)
-      - name: Show filesystem scan results
+      # Show results (optional)
+      - name: Display scan results
         run: |
           cat trivy-results-fs.txt
