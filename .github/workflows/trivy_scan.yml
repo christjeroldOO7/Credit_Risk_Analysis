@@ -1,43 +1,28 @@
-name: Python CI with Teams Alert
-
+name: python                                  # workflow name
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
+  push:                                       
+    branches:                                 # similar to "only" in GitLab
+      - main
 jobs:
+  build:
+    runs-on: ubuntu-latest                    # similar to "image" in GitLab
+    steps:
+      - run: echo "This is a build step"      # similar to "script" in GitLab
   test:
     runs-on: ubuntu-latest
+    needs: build
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest  # If pytest is not in requirements.txt
-
-      - name: Run tests
-        run: pytest
-
-  notify-teams:
-    needs: test
-    if: failure()  # Only run if the `test` job fails
+      - run: echo "This is a test step"
+  integration:
     runs-on: ubuntu-latest
+    needs: container_scanning
     steps:
-      - name: Send failure alert to Teams
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TEAMS_WEBHOOK_ID }}  # Replace with a Teams-compatible webhook
-          message: |
-            ❌ **Python Test Failed**  
-            Repository: ${{ github.repository }}  
-            Workflow: ${{ github.workflow }}  
-            Commit: ${{ github.sha }}  
-            View logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      - run: echo "This is an integration step"
+      - run: exit 1
+        continue-on-error: true
+  prod:
+    runs-on: ubuntu-latest
+    needs: integration
+    steps:
+      - run: echo "This is a deploy step"
+EOF
