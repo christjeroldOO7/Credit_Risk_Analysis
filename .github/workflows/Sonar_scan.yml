@@ -30,8 +30,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Required for PR decoration
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}   # From SonarCloud
         with:
-          projectKey: Credit_Risk_Analysis    # Replace with your key
-          organization: AashikaShravani     # Replace with your org
+          projectKey: AashikaShravani_Credit_Risk_Analysis
+          organization: AashikaShravani
           # Optional args (uncomment if needed):
           # args: >
           #   -Dsonar.python.coverage.reportPaths=coverage.xml
