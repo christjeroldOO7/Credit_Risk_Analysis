@@ -12,19 +12,20 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        fetch-depth: 0  # Required to get full git history for SonarCloud analysis
-    
+        fetch-depth: 0
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.x'  # Specify your Python version here
-    
+        python-version: '3.9'  # ✅ Use compatible version
+
     - name: Install dependencies
       run: |
-        pip install -r requirements.txt  # If you have requirements
-        
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
     - name: SonarCloud Scan
       uses: SonarSource/sonarcloud-github-action@master
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Automatic, no need to set in secrets
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}   # Needs to be set in repo secrets
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
