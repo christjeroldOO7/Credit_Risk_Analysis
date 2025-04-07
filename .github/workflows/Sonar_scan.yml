@@ -35,14 +35,6 @@ jobs:
             echo '<coverage></coverage>' > coverage.xml
           fi
 
-      - name: Install SonarScanner
-        run: |
-          export SONAR_SCANNER_VERSION=4.8.0.2856
-          wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip
-          unzip sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip
-          sudo mv sonar-scanner-${SONAR_SCANNER_VERSION}-linux /opt/sonar-scanner
-          echo "/opt/sonar-scanner/bin" >> $GITHUB_PATH
-
       - name: Run SonarCloud Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
