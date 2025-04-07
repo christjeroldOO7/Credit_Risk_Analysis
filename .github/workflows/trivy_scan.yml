@@ -6,11 +6,11 @@ on:
   pull_request:
     branches: [ "main" ]
   schedule:
-    - cron: '0 0 * * *'  # Daily scan
+    - cron: '0 0 * * *'  # Daily scan at midnight
 
 jobs:
   trivy-scan:
-    runs-on: ubuntu-latest 
+    runs-on: ubuntu-latest
     permissions:
       security-events: write  # Required for GitHub Advanced Security
 
@@ -18,7 +18,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Scan repository files (SAST)
+      # Step 1: Filesystem scan (always runs)
       - name: Run Trivy filesystem scan
         uses: aquasecurity/trivy-action@master
         with:
@@ -29,9 +29,16 @@ jobs:
           exit-code: '1'
           output: 'trivy-results-fs.txt'
 
-      # Scan Python dependencies (if requirements.txt exists)
+      # Step 2: Dependency scan (only if requirements.txt exists)
+      - name: Check for requirements.txt
+        id: check-requirements
+        run: |
+          if [ -f "requirements.txt" ]; then
+            echo "requirements_exists=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Run Trivy dependency scan
-        if: exists('requirements.txt')
+        if: steps.check-requirements.outputs.requirements_exists == 'true'
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'dep'
@@ -40,13 +47,14 @@ jobs:
           format: 'sarif'
           output: 'trivy-results-dep.sarif'
 
-      # Upload results to GitHub Security tab (SARIF format)
+      # Upload results to GitHub Security tab
       - name: Upload SARIF results
+        if: steps.check-requirements.outputs.requirements_exists == 'true'
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: 'trivy-results-dep.sarif'
 
-      # Print filesystem scan results (optional)
+      # Print filesystem results (optional)
       - name: Show filesystem scan results
         run: |
           cat trivy-results-fs.txt
