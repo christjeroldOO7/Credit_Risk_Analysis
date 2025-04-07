@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Required for SonarCloud to get full commit history
+          fetch-depth: 0  # Important for SonarCloud analysis
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -23,11 +23,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest pytest-cov  # Install test coverage tools
+          pip install pytest pytest-cov
 
       - name: Run tests with coverage
         run: |
-          # Run tests if any exist, otherwise create empty coverage file
           if [ -d "tests" ] || ls test_*.py 1> /dev/null 2>&1; then
             pytest --cov=./ --cov-report=xml
           else
@@ -35,15 +34,14 @@ jobs:
             echo '<coverage></coverage>' > coverage.xml
           fi
 
-      - name: Run SonarCloud Scan
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@v2
+        with:
+          args: >
+            -Dsonar.projectKey=AashikaShravani_Credit_Risk_Analysis
+            -Dsonar.organization=AashikaShravani
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.sources=.
+            -Dsonar.python.coverage.reportPaths=coverage.xml
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          /opt/sonar-scanner/bin/sonar-scanner \
-            -Dsonar.projectKey=AashikaShravani_Credit_Risk_Analysis \
-            -Dsonar.organization=AashikaShravani \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.sources=. \
-            -Dsonar.language=py \
-            -Dsonar.python.coverage.reportPaths=coverage.xml
