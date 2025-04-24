@@ -1,0 +1,66 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  sonarqube:
+    name: SonarQube
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for proper SonarQube scan
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Notify Teams
+        if: always()
+        run: |
+          curl -H 'Content-Type: application/json' \
+          -d '{
+            "type": "message",
+            "attachments": [
+              {
+                "contentType": "application/vnd.microsoft.card.adaptive",
+                "content": {
+                  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                  "type": "AdaptiveCard",
+                  "version": "1.4",
+                  "body": [
+                    {
+                      "type": "TextBlock",
+                      "size": "Large",
+                      "weight": "Bolder",
+                      "text": "✅ SonarQube Scan Completed"
+                    },
+                    {
+                      "type": "TextBlock",
+                      "text": "The SonarQube scan for the latest commit on **main** is complete.",
+                      "wrap": true
+                    },
+                    {
+                      "type": "TextBlock",
+                      "text": "🔍 Click the button below to view the full scan report.",
+                      "wrap": true
+                    }
+                  ],
+                  "actions": [
+                    {
+                      "type": "Action.OpenUrl",
+                      "title": "View SonarQube Dashboard",
+                      "url": "https://sonarcloud.io/project/overview?id=christjeroldOO7_Credit_Risk_Analysis"
+                    }
+                  ]
+                }
+              }
+            ]
+          }' \
+          ${{ secrets.TEAMS_WEBHOOK_URL }}
