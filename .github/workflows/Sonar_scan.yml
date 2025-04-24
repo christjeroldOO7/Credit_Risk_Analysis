@@ -1,47 +1,66 @@
-name: SonarCloud Analysis
-on: 
+name: Build
+
+on:
   push:
-    branches: [ main, master ]
-  pull_request: 
-    types: [ opened, synchronize, reopened ]
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
-  sonarcloud:
-    name: SonarCloud Scan
-    runs-on: ubuntu-latest 
+  sonarqube:
+    name: SonarQube
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Important for SonarCloud analysis
+          fetch-depth: 0  # Needed for proper SonarQube scan
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest pytest-cov
-
-      - name: Run tests with coverage
-        run: |
-          if [ -d "tests" ] || ls test_*.py 1> /dev/null 2>&1; then
-            pytest --cov=./ --cov-report=xml
-          else
-            echo "No tests found - creating empty coverage.xml"
-            echo '<coverage></coverage>' > coverage.xml
-          fi
-
-      - name: SonarCloud Scan
-        uses: sonarsource/sonarcloud-github-action@v2
-        with:
-          args: >
-            -Dsonar.projectKey=AashikaShravani_Credit_Risk_Analysis
-            -Dsonar.organization=AashikaShravani
-            -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.sources=.
-            -Dsonar.python.coverage.reportPaths=coverage.xml
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Notify Teams
+        if: always()
+        run: |
+          curl -H 'Content-Type: application/json' \
+          -d '{
+            "type": "message",
+            "attachments": [
+              {
+                "contentType": "application/vnd.microsoft.card.adaptive",
+                "content": {
+                  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                  "type": "AdaptiveCard",
+                  "version": "1.4",
+                  "body": [
+                    {
+                      "type": "TextBlock",
+                      "size": "Large",
+                      "weight": "Bolder",
+                      "text": "✅ SonarQube Scan Completed"
+                    },
+                    {
+                      "type": "TextBlock",
+                      "text": "The SonarQube scan for the latest commit on **main** is complete.",
+                      "wrap": true
+                    },
+                    {
+                      "type": "TextBlock",
+                      "text": "🔍 Click the button below to view the full scan report.",
+                      "wrap": true
+                    }
+                  ],
+                  "actions": [
+                    {
+                      "type": "Action.OpenUrl",
+                      "title": "View SonarQube Dashboard",
+                      "url": "https://sonarcloud.io/project/overview?id=AashikaShravani_Credit_Risk_Analysis"
+                    }
+                  ]
+                }
+              }
+            ]
+          }' \
+          ${{ secrets.TEAMS_WEBHOOK_URL }}
